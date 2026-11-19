@@ -90,7 +90,9 @@ public class Order {
     }
 
     public void cancelOrder() {
-        this.status = "Cancelled";
+    this.status = "Cancelled";
+    client.addOrder(this);
+    seller.addManagedOrder(this);
     }
 
     public double calculateTotal() {
@@ -117,6 +119,7 @@ public class Order {
         }
         return sb.toString();
     }
+
 
     public int getOrderId() { return orderId; }
     public String getStatus() { return status; }

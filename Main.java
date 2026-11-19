@@ -16,12 +16,14 @@ public class Main {
         seller.addCookie(new Cookie(2, "Double Fudge", 3.00, 10));
         seller.addCookie(new Cookie(3, "Oatmeal Raisin", 2.20, 15));
 
-        Client defaultClient = new Client(2, "Camille", "camille@test.com", "1234", "12 Baker Street");
-        clients.add(defaultClient);
+        Client c1 = new Client(2, "Camille", "camille@test.com", "1234", "12 Baker Street");
+        Client c2 = new Client(3, "Paul", "paul@test.com", "1122", "9 Cookie Street");
+        clients.add(c1);
+        clients.add(c2);
 
         while (true) {
             System.out.println("\n=== COOKIE SELLING SYSTEM ===");
-            System.out.println("1. Client Mode (camille@test.com / 1234)");
+            System.out.println("1. Client Mode (camille@test.com / 1234) (paul@test.com / 1122)");
             System.out.println("2. Register New Client");
             System.out.println("3. Seller Mode (seller@cookies.com / admin123)");
             System.out.println("0. Exit");
@@ -85,12 +87,14 @@ public class Main {
             int ch = Integer.parseInt(scanner.nextLine());
 
             if (ch == 1) {
-                for (Cookie cookie : seller.getCookies()) {
-                    System.out.println(cookie.getDetails());
-                }
+                printStock();
             } else if (ch == 2) {
+                printStock();
                 Order order = new Order(++nextOrderId, loggedIn, seller);
                 int detailId = 1;
+                boolean allInStock = true;
+                double totalToPay = 0.0;
+
                 while (true) {
                     System.out.print("Enter Cookie ID to add (0 to checkout): ");
                     int cid = Integer.parseInt(scanner.nextLine());
@@ -106,15 +110,32 @@ public class Main {
                     }
                     System.out.print("Quantity: ");
                     int qty = Integer.parseInt(scanner.nextLine());
+                    if (qty <= 0) {
+                        System.out.println("Quantity must be greater than 0.");
+                        continue;
+                    }
+                    if (!selected.checkStock(qty)) {
+                        allInStock = false;
+                    }
                     order.addOrderDetail(detailId++, selected, qty);
+                    totalToPay += selected.getPrice() * qty;
                 }
 
-                System.out.print("Payment method (Card / PayPal / INVALID to test failure): ");
-                String method = scanner.nextLine();
-                order.setPaymentMethod(order.getOrderId(), method);
-                order.createOrder();
-                System.out.println("Order ID: " + order.getOrderId());
-            } else if (ch == 3) {
+                if (detailId == 1) {
+                    System.out.println("Cart is empty. Order not created.");
+                    nextOrderId--;
+                } else {
+                    if (allInStock) {
+                        System.out.println("Total amount to pay: $" + String.format("%.2f", totalToPay));
+                        System.out.print("Payment method (Card / PayPal / INVALID to test failure): ");
+                        String method = scanner.nextLine();
+                        order.setPaymentMethod(order.getOrderId(), method);
+                    }
+                    order.createOrder();
+                    printStock();
+                    System.out.println("Order #" + order.getOrderId() + " final status: " + order.getStatus());
+                }
+            }else if (ch == 3) {
                 System.out.print("Enter Order ID: ");
                 int oid = Integer.parseInt(scanner.nextLine());
                 System.out.println(loggedIn.trackOrder(oid));
@@ -136,6 +157,7 @@ public class Main {
         }
 
         while (true) {
+            printStock();
             System.out.println("\n--- Seller Menu ---");
             System.out.println("1. Update Inventory");
             System.out.println("2. View All Orders");
@@ -169,4 +191,10 @@ public class Main {
             }
         }
     }
+    private static void printStock() {
+    System.out.println("\n--- Current Cookie Stock ---");
+    for (Cookie cookie : seller.getCookies()) {
+        System.out.println(cookie.getDetails());
+    }
+}
 }
